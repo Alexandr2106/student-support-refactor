@@ -1,38 +1,57 @@
 @startuml
-package "infrastructure.notifications" {
-  [AbstractMessengerFactory] <|-- ProviderAFactory
-  [AbstractMessengerFactory] <|-- ProviderBFactory
-
-  interface MessengerClient
-  interface Authentication
-  interface MessageSerializer
-  interface ErrorHandler
-
-  ProviderAFactory --> ProviderAClient : creates
-  ProviderAFactory --> ProviderAAuth : creates
-  ProviderAFactory --> ProviderASerializer : creates
-  ProviderAFactory --> ProviderAErrorHandler : creates
-
-  ProviderBFactory --> ProviderBClient : creates
-  ProviderBFactory --> ProviderBAuth : creates
-  ProviderBFactory --> ProviderBSerializer : creates
-  ProviderBFactory --> ProviderBErrorHandler : creates
-
-  ProviderAClient ..|> MessengerClient
-  ProviderAAuth ..|> Authentication
-  ProviderASerializer ..|> MessageSerializer
-  ProviderAErrorHandler ..|> ErrorHandler
-
-  ProviderBClient ..|> MessengerClient
-  ProviderBAuth ..|> Authentication
-  ProviderBSerializer ..|> MessageSerializer
-  ProviderBErrorHandler ..|> ErrorHandler
+interface IMessengerClient {
+    +send(student_id, message)
 }
 
-class AppealService {
-  -messenger_factory: AbstractMessengerFactory
-  +update_appeal_status(...)
+interface IAuthentication {
+    +get_token()
 }
 
-AppealService ..> AbstractMessengerFactory : uses
+interface IMessageSerializer {
+    +serialize(text)
+}
+
+interface IErrorHandler {
+    +handle_error(error)
+}
+
+class ProviderAMessengerClient
+class ProviderAAuthentication
+class ProviderAMessageSerializer
+class ProviderAErrorHandler
+
+class ProviderBMessengerClient
+class ProviderBAuthentication
+class ProviderBMessageSerializer
+class ProviderBErrorHandler
+
+class NotificationAbstractFactory {
+    +create(provider): IMessengerClient
+}
+
+class RequestHandler {
+    -messenger: IMessengerClient
+    +process(...)
+}
+
+RequestHandler --> IMessengerClient
+
+ProviderAMessengerClient ..|> IMessengerClient
+ProviderAMessengerClient --> ProviderAAuthentication
+ProviderAMessengerClient --> ProviderAMessageSerializer
+ProviderAMessengerClient --> ProviderAErrorHandler
+
+ProviderBMessengerClient ..|> IMessengerClient
+ProviderBMessengerClient --> ProviderBAuthentication
+ProviderBMessengerClient --> ProviderBMessageSerializer
+ProviderBMessengerClient --> ProviderBErrorHandler
+
+NotificationAbstractFactory --> ProviderAMessengerClient : creates
+NotificationAbstractFactory --> ProviderBMessengerClient : creates
+
+note right of NotificationAbstractFactory
+  Ensures consistent families:
+  A-components only with A,
+  B-components only with B.
+end note
 @enduml

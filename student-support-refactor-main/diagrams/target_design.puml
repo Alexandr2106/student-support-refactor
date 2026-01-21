@@ -1,51 +1,38 @@
 @startuml
-interface IRequestSource {
-    +exists(student_id, topic): bool
-    +save(student_id, topic, text): str
+package "infrastructure.notifications" {
+  [AbstractMessengerFactory] <|-- ProviderAFactory
+  [AbstractMessengerFactory] <|-- ProviderBFactory
+
+  interface MessengerClient
+  interface Authentication
+  interface MessageSerializer
+  interface ErrorHandler
+
+  ProviderAFactory --> ProviderAClient : creates
+  ProviderAFactory --> ProviderAAuth : creates
+  ProviderAFactory --> ProviderASerializer : creates
+  ProviderAFactory --> ProviderAErrorHandler : creates
+
+  ProviderBFactory --> ProviderBClient : creates
+  ProviderBFactory --> ProviderBAuth : creates
+  ProviderBFactory --> ProviderBSerializer : creates
+  ProviderBFactory --> ProviderBErrorHandler : creates
+
+  ProviderAClient ..|> MessengerClient
+  ProviderAAuth ..|> Authentication
+  ProviderASerializer ..|> MessageSerializer
+  ProviderAErrorHandler ..|> ErrorHandler
+
+  ProviderBClient ..|> MessengerClient
+  ProviderBAuth ..|> Authentication
+  ProviderBSerializer ..|> MessageSerializer
+  ProviderBErrorHandler ..|> ErrorHandler
 }
 
-interface INotifier {
-    +send(student_id, message)
+class AppealService {
+  -messenger_factory: AbstractMessengerFactory
+  +update_appeal_status(...)
 }
 
-interface IAuditLogger {
-    +log(message)
-}
-
-class RequestHandler {
-    -source: IRequestSource
-    -notifier: INotifier
-    -logger: IAuditLogger
-    +process(...)
-}
-
-class DatabaseRequestSource
-class FileRequestSource
-class WebServiceRequestSource
-
-class SourceFactory {
-    +create_request_source(config): IRequestSource
-}
-
-RequestHandler --> IRequestSource
-RequestHandler --> INotifier
-RequestHandler --> IAuditLogger
-
-DatabaseRequestSource ..|> IRequestSource
-FileRequestSource ..|> IRequestSource
-WebServiceRequestSource ..|> IRequestSource
-
-SourceFactory --> DatabaseRequestSource : creates
-SourceFactory --> FileRequestSource : creates
-SourceFactory --> WebServiceRequestSource : creates
-
-note right of RequestHandler
-  Depends only on abstractions.
-  No knowledge of concrete implementations.
-end note
-
-note left of SourceFactory
-  Reads config.yaml and
-  returns appropriate implementation.
-end note
+AppealService ..> AbstractMessengerFactory : uses
 @enduml

@@ -7,3 +7,7 @@
 dataSourceType: db 
 
 notificationProvider: provider_a
+
+```bash
+pip install pytest pyyaml
+pytest tests/ -v

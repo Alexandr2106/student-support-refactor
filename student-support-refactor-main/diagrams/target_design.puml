@@ -1,32 +1,7 @@
 @startuml
+' === Существующая часть (сокращена) ===
 interface IMessengerClient {
     +send(student_id, message)
-}
-
-interface IAuthentication {
-    +get_token()
-}
-
-interface IMessageSerializer {
-    +serialize(text)
-}
-
-interface IErrorHandler {
-    +handle_error(error)
-}
-
-class ProviderAMessengerClient
-class ProviderAAuthentication
-class ProviderAMessageSerializer
-class ProviderAErrorHandler
-
-class ProviderBMessengerClient
-class ProviderBAuthentication
-class ProviderBMessageSerializer
-class ProviderBErrorHandler
-
-class NotificationAbstractFactory {
-    +create(provider): IMessengerClient
 }
 
 class RequestHandler {
@@ -36,22 +11,48 @@ class RequestHandler {
 
 RequestHandler --> IMessengerClient
 
-ProviderAMessengerClient ..|> IMessengerClient
-ProviderAMessengerClient --> ProviderAAuthentication
-ProviderAMessengerClient --> ProviderAMessageSerializer
-ProviderAMessengerClient --> ProviderAErrorHandler
+' === Новые компоненты ===
+class AppConfigSingleton {
+  - data: dict
+  + get(key)
+  + __new__()
+}
 
-ProviderBMessengerClient ..|> IMessengerClient
-ProviderBMessengerClient --> ProviderBAuthentication
-ProviderBMessengerClient --> ProviderBMessageSerializer
-ProviderBMessengerClient --> ProviderBErrorHandler
+class AppConfig {
+  - data: dict
+  + get(key)
+}
 
-NotificationAbstractFactory --> ProviderAMessengerClient : creates
-NotificationAbstractFactory --> ProviderBMessengerClient : creates
+class AuditLoggerSingleton {
+  - _entries: list
+  + log()
+  + get_logs()
+}
 
-note right of NotificationAbstractFactory
-  Ensures consistent families:
-  A-components only with A,
-  B-components only with B.
+class AuditLogger {
+  - _entries: list
+  + log()
+  + get_logs()
+}
+
+class NotificationService {
+  - messenger: IMessengerClient
+  - config: AppConfig
+  - auditor: AuditLogger
+  + send_notification(...)
+}
+
+NotificationService --> IMessengerClient
+NotificationService --> AppConfig
+NotificationService --> AuditLogger
+
+note right of NotificationService
+  DI-вариант: явные зависимости
 end note
+
+note left of AppConfigSingleton
+  Singleton: глобальное состояние → 
+  проблемы с тестами и параллельностью
+end note
+
 @enduml
